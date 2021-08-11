@@ -55,8 +55,7 @@ class BERTDataset(Dataset):
 max_len = 64
 batch_size = 64
 warmup_ratio = 0.1
-# num_epochs = 5
-num_epochs = 1
+num_epochs = 5
 max_grad_norm = 1
 log_interval = 200
 learning_rate =  5e-5
@@ -100,7 +99,7 @@ class BERTClassifier(nn.Module):
 model = BERTClassifier(bertmodel,  dr_rate=0.5).to(device)
 
 #GPU에서 저장하고 CPU에서 불러오기
-PATH = 'model.pt'
+PATH = 'model_5epoch.pt'
 
 # # 불러오기
 
@@ -133,30 +132,36 @@ def timedelta_total_seconds(timedelta):
     return (timedelta.microseconds + 0.0 + (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6    
 
 
-for e in range(num_epochs):
-    test_acc = 0.0
-    model.eval()
-    test_num = 0
-    test_s = 0
-    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
-        t_start = datetime.now()
-        token_ids = token_ids.long().to(device)
-        segment_ids = segment_ids.long().to(device)
-        valid_length= valid_length
-        label = label.long().to(device)
-        out = model(token_ids, valid_length, segment_ids)
-        test_acc += calc_accuracy(out, label)
-        t_end = datetime.now()
-        test_num += 1
-        test_s += timedelta_total_seconds(t_end - t_start)
-        print("inference 시간 : ", t_end - t_start)
-    print("epoch {} test acc {}".format(e+1, test_acc / (batch_id+1)))
-    print('test_num : ',test_num)
-    print('test_s : ',test_s)
-    print('평균 시간 : ', test_s/test_num)
+model.eval()
 
+test_acc = 0.0
+test_num = 0
+test_s = 0
+for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
+    t_start = datetime.now()
+    token_ids = token_ids.long().to(device)
+    segment_ids = segment_ids.long().to(device)
+    valid_length= valid_length
+    label = label.long().to(device)
+    out = model(token_ids, valid_length, segment_ids)
+    test_acc += calc_accuracy(out, label)
+    t_end = datetime.now()
+    test_num += 1
+    test_s += timedelta_total_seconds(t_end - t_start)
+    print("inference 시간 : ", t_end - t_start)
+print("test acc {}".format(test_acc / (batch_id+1)))
+print('test_num : ',test_num)
+print('test_s : ',test_s)
+print('평균 시간 : ', test_s/test_num)
 
+# gpu로 했을 경우
 # epoch 1 test acc 0.8915441176470589
 # test_num :  782
 # test_s :  62.30840700000001
 # 평균 시간 :  0.07967826982097188
+
+# 5 epoch
+# test acc 0.8979379795396419
+# test_num :  782
+# test_s :  62.34623000000002
+# 평균 시간 :  0.07972663682864453
