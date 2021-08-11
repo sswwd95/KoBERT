@@ -173,6 +173,7 @@ PATH = 'test.pt'
 torch.save(model.state_dict(), PATH)
 
 print('저장 완료')
+print('저장 완료')
 
 
 '''
