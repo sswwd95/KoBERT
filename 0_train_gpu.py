@@ -107,10 +107,6 @@ class BERTClassifier(nn.Module):
 
 model = BERTClassifier(bertmodel,  dr_rate=0.5).to(device)
 
-# PATH = 'model_5epoch.pt'
-PATH = 'test.pt'
-
-# # 저장하기
 
 # Prepare optimizer and schedule (linear warmup and decay)
 no_decay = ['bias', 'LayerNorm.weight']
@@ -142,7 +138,6 @@ for e in range(num_epochs):
     test_acc = 0.0
     model.train()
     tr_start = datetime.now()
-    torch.save(model.state_dict(), PATH)
 
     for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(train_dataloader)):
         optimizer.zero_grad()
@@ -168,13 +163,11 @@ end = datetime.now()
 
 print(" 총 train 시간 : ", end - start)
 
-PATH = 'test.pt'
+PATH = 'model_5epoch.pt'
 
-# # 저장하기
+# 저장하기
 torch.save(model.state_dict(), PATH)
 
-print('저장 완료')
-print('저장 완료')
 
 
 '''

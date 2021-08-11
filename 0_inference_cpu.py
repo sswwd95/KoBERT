@@ -99,7 +99,7 @@ class BERTClassifier(nn.Module):
 
 
 #GPU에서 저장하고 CPU에서 불러오기
-PATH = 'model.pt'
+PATH = 'model_5epoch.pt'
 
 # # 불러오기
 model = BERTClassifier(bertmodel,  dr_rate=0.5)
@@ -130,24 +130,47 @@ def calc_accuracy(X,Y):
 def timedelta_total_seconds(timedelta):
     return (timedelta.microseconds + 0.0 + (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6    
 
-for e in range(num_epochs):
-    test_acc = 0.0
-    model.eval()
-    test_num = 0
-    test_s = 0
-    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
-        t_start = datetime.now()
-        token_ids = token_ids.long().to(device)
-        segment_ids = segment_ids.long().to(device)
-        valid_length= valid_length
-        label = label.long().to(device)
-        out = model(token_ids, valid_length, segment_ids)
-        test_acc += calc_accuracy(out, label)
-        t_end = datetime.now()
-        test_num += 1
-        test_s += timedelta_total_seconds(t_end - t_start)
-        print("inference 시간 : ", t_end - t_start)
-    print("epoch {} test acc {}".format(e+1, test_acc / (batch_id+1)))
-    print('test 개수 : ',test_num)
-    print('test 전체 시간 : ',test_s)
-    print('평균 시간 : ', test_s/test_num)
+model.eval()
+
+test_acc = 0.0
+test_num = 0
+test_s = 0
+for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
+    t_start = datetime.now()
+    token_ids = token_ids.long().to(device)
+    segment_ids = segment_ids.long().to(device)
+    valid_length= valid_length
+    label = label.long().to(device)
+    out = model(token_ids, valid_length, segment_ids)
+    test_acc += calc_accuracy(out, label)
+    t_end = datetime.now()
+    test_num += 1
+    test_s += timedelta_total_seconds(t_end - t_start)
+    print("inference 시간 : ", t_end - t_start)
+print("test acc {}".format( test_acc / (batch_id+1)))
+print('test 개수 : ',test_num)
+print('test 전체 시간 : ',test_s)
+print('평균 시간 : ', test_s/test_num)
+
+'''
+inference 시간 :  0:00:01.428559
+inference 시간 :  0:00:01.461723
+inference 시간 :  0:00:01.759260
+inference 시간 :  0:00:01.825048
+inference 시간 :  0:00:01.396874
+
+...
+
+inference 시간 :  0:00:01.277479
+inference 시간 :  0:00:01.734455
+inference 시간 :  0:00:01.694438
+inference 시간 :  0:00:01.609790
+inference 시간 :  0:00:00.456919
+'''
+
+'''
+test acc 0.8979379795396419
+test 개수 :  782
+test 전체 시간 :  1216.5802919999992
+평균 시간 :  1.5557292736572879
+'''
