@@ -10,7 +10,7 @@ import gluonnlp as nlp
 import numpy as np
 from tqdm import tqdm
 from tqdm.notebook import tqdm, tqdm_notebook
-from datetime import datetime
+from datetime import datetime, date
 
 from kobert.utils import get_tokenizer
 from kobert.pytorch_kobert import get_pytorch_kobert_model
@@ -20,7 +20,6 @@ from transformers.optimization import get_cosine_schedule_with_warmup
 
 ##GPU 사용 시
 device = torch.device("cuda:0")
-device2 = torch.device('cpu')
 
 bertmodel, vocab = get_pytorch_kobert_model()
 
@@ -56,7 +55,8 @@ class BERTDataset(Dataset):
 max_len = 64
 batch_size = 64
 warmup_ratio = 0.1
-num_epochs = 5
+# num_epochs = 5
+num_epochs = 1
 max_grad_norm = 1
 log_interval = 200
 learning_rate =  5e-5
@@ -97,8 +97,15 @@ class BERTClassifier(nn.Module):
             out = self.dropout(pooler)
         return self.classifier(out)
 
-
 model = BERTClassifier(bertmodel,  dr_rate=0.5).to(device)
+
+#GPU에서 저장하고 CPU에서 불러오기
+PATH = 'model.pt'
+
+# # 불러오기
+
+model.load_state_dict(torch.load(PATH))
+
 
 # Prepare optimizer and schedule (linear warmup and decay)
 no_decay = ['bias', 'LayerNorm.weight']
@@ -122,39 +129,34 @@ def calc_accuracy(X,Y):
     train_acc = (max_indices == Y).sum().data.cpu().numpy()/max_indices.size()[0]
     return train_acc
 
+def timedelta_total_seconds(timedelta):
+    return (timedelta.microseconds + 0.0 + (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6    
+
+
 for e in range(num_epochs):
-    train_acc = 0.0
     test_acc = 0.0
-    model.train()
-    tr_start = datetime.now()
-    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(train_dataloader)):
-        optimizer.zero_grad()
+    model.eval()
+    test_num = 0
+    test_s = 0
+    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
+        t_start = datetime.now()
         token_ids = token_ids.long().to(device)
         segment_ids = segment_ids.long().to(device)
         valid_length= valid_length
         label = label.long().to(device)
         out = model(token_ids, valid_length, segment_ids)
-        loss = loss_fn(out, label)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-        optimizer.step()
-        scheduler.step()  # Update learning rate schedule
-        train_acc += calc_accuracy(out, label)
-        if batch_id % log_interval == 0:
-            print("epoch {} batch id {} loss {} train acc {}".format(e+1, batch_id+1, loss.data.cpu().numpy(), train_acc / (batch_id+1)))
-    tr_end = datetime.now()
-    print("train 시간 : ", tr_end - tr_start)
-    print("epoch {} train acc {}".format(e+1, train_acc / (batch_id+1)))
-
-    model.eval()
-    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(tqdm_notebook(test_dataloader)):
-        t_start = datetime.now()
-        token_ids = token_ids.long().to(device2)
-        segment_ids = segment_ids.long().to(device2)
-        valid_length= valid_length
-        label = label.long().to(device2)
-        out = model(token_ids, valid_length, segment_ids)
         test_acc += calc_accuracy(out, label)
         t_end = datetime.now()
+        test_num += 1
+        test_s += timedelta_total_seconds(t_end - t_start)
         print("inference 시간 : ", t_end - t_start)
     print("epoch {} test acc {}".format(e+1, test_acc / (batch_id+1)))
+    print('test_num : ',test_num)
+    print('test_s : ',test_s)
+    print('평균 시간 : ', test_s/test_num)
+
+
+# epoch 1 test acc 0.8915441176470589
+# test_num :  782
+# test_s :  62.30840700000001
+# 평균 시간 :  0.07967826982097188
