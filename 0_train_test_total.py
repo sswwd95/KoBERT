@@ -56,7 +56,8 @@ class BERTDataset(Dataset):
 max_len = 64
 batch_size = 64
 warmup_ratio = 0.1
-num_epochs = 5
+# num_epochs = 5
+num_epochs = 1
 max_grad_norm = 1
 log_interval = 200
 learning_rate =  5e-5
@@ -121,7 +122,6 @@ def calc_accuracy(X,Y):
     max_vals, max_indices = torch.max(X, 1)
     train_acc = (max_indices == Y).sum().data.cpu().numpy()/max_indices.size()[0]
     return train_acc
-
 
 
 for e in range(num_epochs):
