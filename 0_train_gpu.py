@@ -172,6 +172,8 @@ PATH = 'test.pt'
 # # 저장하기
 torch.save(model.state_dict(), PATH)
 
+print('저장 완료')
+
 
 '''
 epoch 1 batch id 1 loss 0.7100536227226257 train acc 0.5
