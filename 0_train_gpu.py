@@ -52,13 +52,21 @@ class BERTDataset(Dataset):
 
 
 ## Setting parameters
+# max_len = 64
+# batch_size = 64
+# warmup_ratio = 0.1
+# num_epochs = 5
+# max_grad_norm = 1
+# log_interval = 200
+# learning_rate =  5e-5
+
 max_len = 64
 batch_size = 64
 warmup_ratio = 0.1
-num_epochs = 5
+num_epochs = 1
 max_grad_norm = 1
 log_interval = 200
-learning_rate =  5e-5
+learning_rate =  1e-1
 
 data_train = BERTDataset(dataset_train, 0, 1, tok, max_len, True, False)
 data_test = BERTDataset(dataset_test, 0, 1, tok, max_len, True, False)
@@ -99,6 +107,11 @@ class BERTClassifier(nn.Module):
 
 model = BERTClassifier(bertmodel,  dr_rate=0.5).to(device)
 
+# PATH = 'model_5epoch.pt'
+PATH = 'test.pt'
+
+# # 저장하기
+torch.save(model.state_dict(), PATH)
 
 # Prepare optimizer and schedule (linear warmup and decay)
 no_decay = ['bias', 'LayerNorm.weight']
@@ -124,6 +137,7 @@ def calc_accuracy(X,Y):
 
 # train 
 
+start = datetime.now()
 for e in range(num_epochs):
     train_acc = 0.0
     test_acc = 0.0
@@ -149,13 +163,15 @@ for e in range(num_epochs):
     print("train 시간 : ", tr_end - tr_start)
     print("epoch {} train acc {}".format(e+1, train_acc / (batch_id+1)))
 
+end = datetime.now()
 
+print(" 총 train 시간 : ", end - start)
 
-
-PATH = 'model_5epoch.pt'
+PATH = 'test.pt'
 
 # # 저장하기
 torch.save(model.state_dict(), PATH)
+
 
 '''
 epoch 1 batch id 1 loss 0.7100536227226257 train acc 0.5
